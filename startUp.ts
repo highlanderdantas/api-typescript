@@ -17,6 +17,7 @@ class StartUp {
     this.routes();
   }
 
+
   middler() {
     Middler.configure(this.app);
   }
