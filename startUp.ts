@@ -3,6 +3,7 @@ import * as express from "express";
 import DbConfig from "./src/infra/dbConfig";
 import Middler from "./src/infra/middler";
 import NewsRouter from "./src/router/newsRouter";
+import Auth from "./src/security/auth";
 
 class StartUp {
   public app: express.Application;
@@ -17,7 +18,6 @@ class StartUp {
     this.routes();
   }
 
-
   middler() {
     Middler.configure(this.app);
   }
@@ -26,7 +26,8 @@ class StartUp {
     this.app.route("/").get((req, res) => {
       res.send({ versao: "0.0.1" });
     });
-
+    
+    this.app.use(Auth.validate);
     NewsRouter.routes(this.app);
   }
 }
