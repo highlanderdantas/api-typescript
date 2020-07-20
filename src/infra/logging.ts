@@ -8,12 +8,8 @@ class Logging {
 
     private _log;
 
-    constructor() {
-    }
-    
     build(name) {
         this._log = factory.getLogger(name);
-        return this;
     }
 
     info(message: string) {
