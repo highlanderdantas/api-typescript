@@ -27,6 +27,8 @@ class StartUp {
     this.app.route("/").get((req, res) => {
       res.send({ versao: "0.0.1" });
     });
+
+    // ADICIONANDO AUTENTICAÇÃO JWT
     this.app.use(Auth.validate);
     NewsRouter.routes(this.app);
     ImageRouter.routes(this.app);
