@@ -1,4 +1,5 @@
 import * as HttpStatus from "http-status";
+import * as redis from "redis";
 
 import NewsService from "../service/newsService";
 import Helper from "../infra/helper";
@@ -10,21 +11,29 @@ class NewsController {
   }
 
   get(req, res) {
-    NewsService.get()
-      .then((news) => {
-        Helper.sendResponse(res, HttpStatus.OK, news);
-        Logging.info("buscando todas noticias");
-      })
-      .catch((error) => Logging.error(`Erro ${error}`));
+    let client = redis.createClient(6379, "redis");
+
+    client.get("news", function (err, reply) {
+      if (reply) {
+        let newsCache = JSON.parse(reply);
+        Helper.sendResponse(res, HttpStatus.OK, newsCache);
+      } else {
+        NewsService.get()
+          .then((news) => {
+            let newsCache = JSON.stringify(news);
+            client.set("news", newsCache);
+            Helper.sendResponse(res, HttpStatus.OK, news);
+          })
+          .catch((error) => Logging.error(`Erro ${error}`));
+      }
+    });
   }
 
   getById(req, res) {
     const _id = req.params.id;
-
     NewsService.getById(_id)
       .then((news) => {
         Helper.sendResponse(res, HttpStatus.OK, news);
-        Logging.info(`buscando noticia de id: ${_id}`);
       })
       .catch((error) => Logging.error(`Erro ${error}`));
   }
@@ -32,6 +41,7 @@ class NewsController {
   create(req, res) {
     let news = req.body;
 
+    invalidateCache();
     NewsService.create(news)
       .then(() => {
         Helper.sendResponse(
@@ -39,7 +49,6 @@ class NewsController {
           HttpStatus.CREATED,
           "Noticia cadastrada com sucesso!"
         );
-        Logging.info("criando uma noticia");
       })
       .catch((error) => Logging.error(`Erro ${error}`));
   }
@@ -48,6 +57,7 @@ class NewsController {
     const _id = req.params.id;
     let news = req.body;
 
+    invalidateCache();
     NewsService.update(_id, news)
       .then(() => {
         Helper.sendResponse(
@@ -55,7 +65,6 @@ class NewsController {
           HttpStatus.OK,
           "Notícia foi atualiza com sucesso!"
         );
-        Logging.info(`atualizando noticia de id: ${_id}`);
       })
       .catch((error) => Logging.error(`Erro ${error}`));
   }
@@ -63,6 +72,7 @@ class NewsController {
   delete(req, res) {
     const _id = req.params.id;
 
+    invalidateCache();
     NewsService.delete(_id)
       .then(() => {
         Helper.sendResponse(
@@ -70,10 +80,14 @@ class NewsController {
           HttpStatus.NO_CONTENT,
           "Noticia deletada com sucesso!"
         );
-        Logging.info(`deletando noticia de id: ${_id}`);
       })
       .catch((error) => Logging.error(`Erro ${error}`));
   }
+}
+
+function invalidateCache() {
+  let client = redis.createClient(6379, "redis");
+  client.del("news");
 }
 
 export default new NewsController();
