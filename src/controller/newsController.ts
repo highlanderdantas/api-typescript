@@ -4,15 +4,16 @@ import * as redis from "redis";
 import NewsService from "../service/newsService";
 import Helper from "../infra/helper";
 import Logging from "../infra/logging";
+import RedisConfig from "../infra/redisConfig";
 
 class NewsController {
+
   constructor() {
     Logging.build("NewsController");
   }
 
   get(req, res) {
-    let client = redis.createClient(6379, "redis");
-
+    let client = RedisConfig.createConnection();
     client.get("news", function (err, cache) {
       if (cache) {
         let newsCache = JSON.parse(cache);
@@ -41,7 +42,9 @@ class NewsController {
   create(req, res) {
     let news = req.body;
 
-    invalidateCache();
+    RedisConfig.createConnection()
+      .invalidate("news");
+
     NewsService.create(news)
       .then(() => {
         Helper.sendResponse(
@@ -57,7 +60,9 @@ class NewsController {
     const _id = req.params.id;
     let news = req.body;
 
-    invalidateCache();
+    RedisConfig.createConnection()
+      .invalidate("news");
+
     NewsService.update(_id, news)
       .then(() => {
         Helper.sendResponse(
@@ -72,7 +77,9 @@ class NewsController {
   delete(req, res) {
     const _id = req.params.id;
 
-    invalidateCache();
+    RedisConfig.createConnection()
+      .invalidate("news");
+
     NewsService.delete(_id)
       .then(() => {
         Helper.sendResponse(
@@ -83,11 +90,6 @@ class NewsController {
       })
       .catch((error) => Logging.error(`Erro ${error}`));
   }
-}
-
-function invalidateCache() {
-  let client = redis.createClient(6379, "redis");
-  client.del("news");
 }
 
 export default new NewsController();
