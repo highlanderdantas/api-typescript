@@ -8,6 +8,6 @@ let payload = {
     email: "haylander60@gmail.com"
 };
 
-var token = jwt.sign(payload, "338c59ac-455a-4331-ba76-dd4bb4a78861");
+var token = jwt.sign(payload, "ba22d23d-9f12-472a-bda3-1ff45f65c9fc");
 
 console.log(token);

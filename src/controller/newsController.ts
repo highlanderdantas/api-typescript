@@ -13,9 +13,9 @@ class NewsController {
   get(req, res) {
     let client = redis.createClient(6379, "redis");
 
-    client.get("news", function (err, reply) {
-      if (reply) {
-        let newsCache = JSON.parse(reply);
+    client.get("news", function (err, cache) {
+      if (cache) {
+        let newsCache = JSON.parse(cache);
         Helper.sendResponse(res, HttpStatus.OK, newsCache);
       } else {
         NewsService.get()
